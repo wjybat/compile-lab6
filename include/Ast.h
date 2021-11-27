@@ -21,6 +21,7 @@ protected:
     std::vector<Instruction*> false_list;
     static IRBuilder *builder;
     void backPatch(std::vector<Instruction*> &list, BasicBlock*bb);
+    void backPatchF(std::vector<Instruction*> &list, BasicBlock*bb);
     std::vector<Instruction*> merge(std::vector<Instruction*> &list1, std::vector<Instruction*> &list2);
 
 public:

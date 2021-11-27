@@ -22,6 +22,10 @@ DECIMIAL ([1-9][0-9]*|0)
 ID [[:alpha:]_][[:alpha:][:digit:]_]*
 EOL (\r\n|\n|\r)
 WHITE [\t ]
+LINECOMMENT \/\/[^\n]*
+commentbegin "/*"
+commentelement .|\n
+commentend "*/"
 %x BLOCKCOMMENT
 
 %%
@@ -122,4 +126,8 @@ WHITE [\t ]
 }
 {EOL} yylineno++;
 {WHITE}
+{commentbegin} {BEGIN BLOCKCOMMENT;}
+<BLOCKCOMMENT>{commentelement} {}
+<BLOCKCOMMENT>{commentend} {BEGIN INITIAL;}
+{LINECOMMENT} {}
 %%
