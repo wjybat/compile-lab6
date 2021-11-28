@@ -178,6 +178,7 @@ public:
     StmtNode* getV1() {return VarDefs1;};
     StmtNode* getV2() {return VarDefs2;};
     void output(int level);
+    void genCode();
 };
 
 class VarDef : public StmtNode
@@ -197,6 +198,7 @@ public:
     void markArray(bool array){isArray=array;};
     bool getIsArray(){return isArray;};
     void setConstNum(ExprNode* num){constNum=num;};
+    void genCode();
 };
 
 class VarInit : public StmtNode
@@ -217,6 +219,7 @@ public:
     void markArray(bool array){isArray=array;};
     bool getIsArray(){return isArray;};
     void setConstNum(ExprNode* num){constNum=num;};
+    void genCode();
 };
 
 class ConstDefs : public StmtNode

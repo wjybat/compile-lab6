@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     if(dump_ast)
         ast.output();
     ast.typeCheck();
-    //ast.genCode(&unit);
+    ast.genCode(&unit);
     if(dump_ir)
         unit.output();
     return 0;
