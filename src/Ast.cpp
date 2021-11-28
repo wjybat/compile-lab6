@@ -98,7 +98,7 @@ void BinaryExpr::genCode()
         false_list = expr2->falseList();
         true_list = merge(expr1->trueList(), expr2->trueList());
     }
-    else if(op >= LESS && op <= GREATER)
+    else if(op >= EQ && op <= GEQ)
     {
         // Todo
         expr1->genCode();
@@ -114,13 +114,26 @@ void BinaryExpr::genCode()
         case GREATER:
             opcode = CmpInstruction::G;
             break;
+        case EQ:
+            opcode = CmpInstruction::E;
+            break;
+        case NEQ:
+            opcode = CmpInstruction::NE;
+            break;
+        case LEQ:
+            opcode = CmpInstruction::LE;
+            break;
+        case GEQ:
+            opcode = CmpInstruction::GE;
+            break;
+
         }
         new CmpInstruction(opcode, dst, src1, src2, bb);
         Instruction* temp=new CondBrInstruction(nullptr,nullptr,dst,builder->getInsertBB());
         true_list.push_back(temp);
         false_list.push_back(temp);
     }
-    else if(op >= ADD && op <= SUB)
+    else if(op >= ADD && op <= MOD)
     {
         expr1->genCode();
         expr2->genCode();
@@ -134,6 +147,15 @@ void BinaryExpr::genCode()
             break;
         case SUB:
             opcode = BinaryInstruction::SUB;
+            break;
+        case MUL:
+            opcode = BinaryInstruction::MUL;
+            break;
+        case DIV:
+            opcode = BinaryInstruction::DIV;
+            break;
+        case MOD:
+            opcode = BinaryInstruction::MOD;
             break;
         }
         new BinaryInstruction(opcode, dst, src1, src2, bb);
