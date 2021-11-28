@@ -301,6 +301,7 @@ public:
     void genCode();
 };
 
+//new added
 class WhileStmt : public StmtNode
 {
 private:
@@ -309,6 +310,8 @@ private:
 public:
     WhileStmt(ExprNode *cond, StmtNode *thenStmt) : cond(cond), thenStmt(thenStmt){};
     void output(int level);
+    void typeCheck();
+    void genCode();
 };
 
 class ReturnStmt : public StmtNode

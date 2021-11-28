@@ -198,10 +198,78 @@ void IfStmt::genCode()
     builder->setInsertBB(end_bb);
 }
 
+//new added
 void IfElseStmt::genCode()
 {
     // Todo
+    Function *func;
+    BasicBlock *then_bb, *else_bb, *end_bb;
+
+    func = builder->getInsertBB()->getParent();
+    then_bb = new BasicBlock(func);
+    else_bb = new BasicBlock(func);
+    end_bb = new BasicBlock(func);
+
+    cond->genCode();
+    
+    backPatch(cond->trueList(), then_bb);
+    backPatchF(cond->falseList(), else_bb);
+    
+    then_bb->addPred(builder->getInsertBB());
+    else_bb->addPred(builder->getInsertBB());
+    end_bb->addPred(else_bb);
+    
+    builder->getInsertBB()->addSucc(then_bb);
+    builder->getInsertBB()->addSucc(else_bb);
+    else_bb->addSucc(end_bb);
+     
+    builder->setInsertBB(then_bb);
+    thenStmt->genCode();
+    then_bb = builder->getInsertBB();
+    new UncondBrInstruction(end_bb, then_bb);
+    
+    builder->setInsertBB(else_bb);
+    elseStmt->genCode();
+    else_bb = builder->getInsertBB();
+    //new UncondBrInstruction(end_bb, else_bb);
+    
+
+    builder->setInsertBB(end_bb);
 }
+//new added
+void WhileStmt::genCode()
+{
+    Function *func;
+    BasicBlock *start_bb,*then_bb, *end_bb;
+
+    func = builder->getInsertBB()->getParent();
+    start_bb = new BasicBlock(func);
+    then_bb = new BasicBlock(func);
+    end_bb = new BasicBlock(func);
+    
+    start_bb->addPred(builder->getInsertBB());
+    builder->getInsertBB()->addSucc(start_bb);
+    builder->setInsertBB(start_bb);
+
+    cond->genCode();
+    backPatch(cond->trueList(), then_bb);
+    backPatchF(cond->falseList(), end_bb);
+    
+    then_bb->addPred(builder->getInsertBB());
+    end_bb->addPred(builder->getInsertBB());
+    builder->getInsertBB()->addSucc(then_bb);
+    builder->getInsertBB()->addSucc(end_bb);
+    
+    builder->setInsertBB(then_bb);
+    thenStmt->genCode();
+    then_bb = builder->getInsertBB();
+    new UncondBrInstruction(start_bb, then_bb);
+
+    builder->setInsertBB(end_bb);
+}
+
+
+
 
 void CompoundStmt::genCode()
 {
@@ -341,6 +409,12 @@ void IfStmt::typeCheck()
 }
 
 void IfElseStmt::typeCheck()
+{
+    // Todo
+}
+
+//new added
+void WhileStmt::typeCheck()
 {
     // Todo
 }
@@ -634,6 +708,7 @@ void IfStmt::output(int level)
     thenStmt->output(level + 4);
 }
 
+//new added
 void WhileStmt::output(int level)
 {
     fprintf(yyout, "%*cWhileStmt\n", level, ' ');
