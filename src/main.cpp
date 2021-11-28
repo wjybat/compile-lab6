@@ -11,6 +11,7 @@ extern FILE *yyin;
 extern FILE *yyout;
 
 int yyparse();
+void init();
 
 char outfile[256] = "a.out";
 bool dump_tokens;
@@ -57,11 +58,12 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: fail to open output file\n", outfile);
         exit(EXIT_FAILURE);
     }
+    init();
     yyparse();
     if(dump_ast)
         ast.output();
     ast.typeCheck();
-    ast.genCode(&unit);
+    //ast.genCode(&unit);
     if(dump_ir)
         unit.output();
     return 0;

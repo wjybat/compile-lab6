@@ -77,19 +77,25 @@ private:
     enum {GLOBAL, PARAM, LOCAL};
     std::string name;
     int scope;
+    bool isConst;
+    bool isArray;
     Operand *addr;  // The address of the identifier.
     // You can add any field you need here.
 
 public:
-    IdentifierSymbolEntry(Type *type, std::string name, int scope);
+    IdentifierSymbolEntry(Type *type, std::string name, int scope, bool isConst, bool isArray);
     virtual ~IdentifierSymbolEntry() {};
     std::string toStr();
     bool isGlobal() const {return scope == GLOBAL;};
     bool isParam() const {return scope == PARAM;};
     bool isLocal() const {return scope >= LOCAL;};
     int getScope() const {return scope;};
+    bool getIsConst() const {return isConst;};
+    bool getIsArray() const {return isArray;};
     void setAddr(Operand *addr) {this->addr = addr;};
     Operand* getAddr() {return addr;};
+    void markConst(bool mark);
+    void markArray(bool array);
     // You can add any function you need here.
 };
 

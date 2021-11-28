@@ -16,6 +16,9 @@ public:
     bool isInt() const {return kind == INT;};
     bool isVoid() const {return kind == VOID;};
     bool isFunc() const {return kind == FUNC;};
+    virtual int paramsLen() {return 0;};
+    virtual void setParamsType(std::vector<Type*> funcParamsType) {};
+
 };
 
 class IntType : public Type
@@ -44,6 +47,9 @@ public:
     Type(Type::FUNC), returnType(returnType), paramsType(paramsType){};
     Type* getRetType() {return returnType;};
     std::string toStr();
+    int paramsLen(){return paramsType.size();};
+    void setParamsType(std::vector<Type*> funcParamsType){paramsType=funcParamsType;};
+
 };
 
 class PointerType : public Type

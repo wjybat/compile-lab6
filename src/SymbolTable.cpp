@@ -20,9 +20,11 @@ std::string ConstantSymbolEntry::toStr()
     return buffer.str();
 }
 
-IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int scope) : SymbolEntry(type, SymbolEntry::VARIABLE), name(name)
+IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int scope,bool isConst, bool isArray) : SymbolEntry(type, SymbolEntry::VARIABLE), name(name)
 {
     this->scope = scope;
+    this->isConst = isConst;
+    this->isArray = isArray;
     addr = nullptr;
 }
 
@@ -30,6 +32,16 @@ std::string IdentifierSymbolEntry::toStr()
 {
     return "@" + name;
 }
+
+void IdentifierSymbolEntry::markConst(bool mark)
+{
+    this->isConst=mark;
+}
+void IdentifierSymbolEntry::markArray(bool mark)
+{
+    this->isArray=mark;
+}
+
 
 TemporarySymbolEntry::TemporarySymbolEntry(Type *type, int label) : SymbolEntry(type, SymbolEntry::TEMPORARY)
 {
