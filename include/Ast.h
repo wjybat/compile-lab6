@@ -44,6 +44,7 @@ public:
     ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){};
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
+    void setOperand(Operand* op) {dst=op;};
 };
 
 class BinaryExpr : public ExprNode
@@ -77,6 +78,7 @@ public:
     enum {ADD, SUB, NOT};
     UnaryExpr(SymbolEntry *se, int op, ExprNode*expr) : ExprNode(se), op(op), expr(expr){dst = new Operand(se);};
     void output(int level);
+    void genCode();
 };
 
 class Id : public ExprNode
@@ -233,6 +235,7 @@ public:
     StmtNode* getC1() {return ConstDefs1;};
     StmtNode* getC2() {return ConstDefs2;};
     void output(int level);
+    void genCode();
 };
 
 class ConstDef : public StmtNode
@@ -253,6 +256,7 @@ public:
     void markArray(bool array){isArray=array;};
     bool getIsArray(){return isArray;};
     void setConstNum(ExprNode* num){constNum=num;};
+    void genCode();
 };
 
 
@@ -274,6 +278,7 @@ private:
 public:
     ConstDecl(StmtNode *constDefs) : constDefs(constDefs){};
     void output(int level);
+    void genCode();
 };
 
 class IfStmt : public StmtNode
@@ -345,6 +350,7 @@ private:
 public:
     ExpStmt(ExprNode *expr) : expr(expr) {};
     void output(int level);
+    void genCode();
 };
 
 class EmptyStmt : public StmtNode
@@ -404,6 +410,7 @@ public:
     StmtNode* getFP1() {return FuncFParams1;};
     StmtNode* getFP2() {return FuncFParams2;};
     void output(int level);
+    void genCode();
 };
 
 class FuncFParam : public StmtNode
@@ -423,6 +430,7 @@ public:
     void markArray(bool array){isArray=array;};
     bool getIsArray(){return isArray;};
     void setConstNum(ExprNode* num){constNum=num;};
+    void genCode();
 };
 
 class LeafFunc : public ExprNode
@@ -431,9 +439,10 @@ private:
     char *id;
     ExprNode *params;
 public:
-    LeafFunc(SymbolEntry *se, char *id) : ExprNode(se),id(id), params(NULL){};
-    LeafFunc(SymbolEntry *se, char *id, ExprNode *params) : ExprNode(se),id(id), params(params){};
+    LeafFunc(SymbolEntry *se, char *id) : ExprNode(se),id(id), params(nullptr){dst = new Operand(se);};
+    LeafFunc(SymbolEntry *se, char *id, ExprNode *params) : ExprNode(se),id(id), params(params){dst = new Operand(se);};
     void output(int level);
+    void genCode();
 };
 
 class FuncRParams : public ExprNode
@@ -442,11 +451,12 @@ private:
     ExprNode *Exp1, *Exp2;
     int leaf;
 public:
-    FuncRParams(SymbolEntry *se, ExprNode *Exp1, ExprNode *Exp2) : ExprNode(se),Exp1(Exp1), Exp2(Exp2), leaf(0){};
+    FuncRParams(SymbolEntry *se, ExprNode *Exp1, ExprNode *Exp2) : ExprNode(se),Exp1(Exp1), Exp2(Exp2), leaf(0){dst = new Operand(se);};
     int isLeaf() {return leaf;}
     ExprNode* getE1() {return Exp1;};
     ExprNode* getE2() {return Exp2;};
     void output(int level);
+    void genCode();
 };
 
 class Ast

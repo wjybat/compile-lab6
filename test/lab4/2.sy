@@ -4,9 +4,11 @@ int c;
 int main()
 {
     int a, b = 1;
-    a = 1 + 2;
+    const int d = 9;
+    a = -b;
     c = 8 % 6;
-    if(a < 5 || a != 7)
+    if(a && b)
         return 1;
+    putint(a);
     return 0;
 }

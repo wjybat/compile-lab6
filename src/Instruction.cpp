@@ -297,6 +297,83 @@ void LoadInstruction::output() const
     fprintf(yyout, "  %s = load %s, %s %s, align 4\n", dst.c_str(), dst_type.c_str(), src_type.c_str(), src.c_str());
 }
 
+LeafVoidIns::LeafVoidIns(SymbolEntry* se, ExprNode* Rparams,BasicBlock *insert_bb) : Instruction(CallV, insert_bb)
+{
+    this->se=se;
+    this->Rparams=Rparams;
+}
+
+LeafVoidIns::~LeafVoidIns()
+{
+    
+}
+
+void LeafVoidIns::output() const
+{
+    if(Rparams==nullptr)
+        fprintf(yyout, "  call %s %s()\n", dynamic_cast<FunctionType*>(se->getType())->getRetType()->toStr().c_str(), se->toStr().c_str());
+    else
+    {
+        fprintf(yyout, "  call %s %s(", dynamic_cast<FunctionType*>(se->getType())->getRetType()->toStr().c_str(), se->toStr().c_str());
+        int len=dynamic_cast<FunctionType*>(se->getType())->paramsLen();
+        ExprNode* p=Rparams;
+        for(int i=len;i>0;i--)
+        {
+            if(i==1)
+            {
+                fprintf(yyout, "%s %s)\n", p->getOperand()->getType()->toStr().c_str(), p->getOperand()->toStr().c_str());
+            }
+            else
+            {
+                fprintf(yyout, "%s %s, ", dynamic_cast<FuncRParams*>(p)->getE2()->getOperand()->getType()->toStr().c_str(),
+                dynamic_cast<FuncRParams*>(p)->getE2()->getOperand()->toStr().c_str());
+                p=dynamic_cast<FuncRParams*>(p)->getE1();
+            }
+            
+        }
+    }
+    
+}
+
+LeafRetIns::LeafRetIns(Operand* dst, SymbolEntry* se, ExprNode* Rparams,BasicBlock *insert_bb) : Instruction(CallR, insert_bb)
+{
+    this->se=se;
+    this->Rparams=Rparams;
+    operands.push_back(dst);
+}
+
+LeafRetIns::~LeafRetIns()
+{
+    
+}
+
+void LeafRetIns::output() const
+{
+    std::string dst = operands[0]->toStr();
+    if(Rparams==nullptr)
+        fprintf(yyout, "  %s =  call %s %s()\n", dst.c_str(), dynamic_cast<FunctionType*>(se->getType())->getRetType()->toStr().c_str(), se->toStr().c_str());
+    else
+    {
+        fprintf(yyout, "  %s =  call %s %s(", dst.c_str(), dynamic_cast<FunctionType*>(se->getType())->getRetType()->toStr().c_str(), se->toStr().c_str());
+        int len=dynamic_cast<FunctionType*>(se->getType())->paramsLen();
+        ExprNode* p=Rparams;
+        for(int i=len;i>0;i--)
+        {
+            if(i==1)
+            {
+                fprintf(yyout, "%s %s)\n", p->getOperand()->getType()->toStr().c_str(), p->getOperand()->toStr().c_str());
+            }
+            else
+            {
+                fprintf(yyout, "%s %s, ",  dynamic_cast<FuncRParams*>(p)->getE2()->getOperand()->getType()->toStr().c_str(), 
+                dynamic_cast<FuncRParams*>(p)->getE2()->getOperand()->toStr().c_str());
+                p=dynamic_cast<FuncRParams*>(p)->getE1();
+            }
+            
+        }
+    }
+}
+
 StoreInstruction::StoreInstruction(Operand *dst_addr, Operand *src, BasicBlock *insert_bb) : Instruction(STORE, insert_bb)
 {
     operands.push_back(dst_addr);

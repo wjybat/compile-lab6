@@ -2,6 +2,7 @@
 #define __INSTRUCTION_H__
 
 #include "Operand.h"
+#include "Ast.h"
 #include <vector>
 #include <map>
 
@@ -28,7 +29,7 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CallV, CallR};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -63,6 +64,28 @@ public:
     StoreInstruction(Operand *dst_addr, Operand *src, BasicBlock *insert_bb = nullptr);
     ~StoreInstruction();
     void output() const;
+};
+
+class LeafVoidIns : public Instruction
+{
+public:
+    LeafVoidIns(SymbolEntry *se, ExprNode* Rparams, BasicBlock *insert_bb = nullptr);
+    ~LeafVoidIns();
+    void output() const;
+private:
+    SymbolEntry *se;
+    ExprNode* Rparams;
+};
+
+class LeafRetIns : public Instruction
+{
+public:
+    LeafRetIns(Operand* dst, SymbolEntry *se, ExprNode* Rparams, BasicBlock *insert_bb = nullptr);
+    ~LeafRetIns();
+    void output() const;
+private:
+    SymbolEntry *se;
+    ExprNode* Rparams;
 };
 
 class BinaryInstruction : public Instruction

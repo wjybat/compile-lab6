@@ -27,6 +27,7 @@ private:
     int size;
 public:
     IntType(int size) : Type(Type::INT), size(size){};
+    int itsSize(){return size;};
     std::string toStr();
 };
 

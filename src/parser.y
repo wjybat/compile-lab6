@@ -254,7 +254,7 @@ UnaryExp
     |
     NOT UnaryExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new UnaryExpr(se, UnaryExpr::NOT, $2);
     }
     ;
@@ -264,25 +264,25 @@ RelExp
     |
     RelExp LESS AddExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::LESS, $1, $3);
     }
     |
     RelExp GREATER AddExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::GREATER, $1, $3);
     }
     |
     RelExp LEQ AddExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::LEQ, $1, $3);
     }
     |
     RelExp GEQ AddExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::GEQ, $1, $3);
     }
     ;
@@ -292,13 +292,13 @@ EqExp
     |
     EqExp EQ RelExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::EQ, $1, $3);
     }
     |
     EqExp NEQ RelExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::NEQ, $1, $3);
     }
     ;
@@ -308,7 +308,7 @@ LAndExp
     |
     LAndExp AND EqExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::AND, $1, $3);
     }
     ;
@@ -318,7 +318,7 @@ LOrExp
     |
     LOrExp OR LAndExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::OR, $1, $3);
     }
     ;
@@ -410,8 +410,7 @@ ArrayInit
     :
     LBRACE RBRACE{
         SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, 0);
-        SymbolEntry *se1 = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
-        $$=new ArrayInit(se1, new Constant(se),1);
+        $$=new ArrayInit(se, new Constant(se),1);
     }
     |
     LBRACE ArrayInits RBRACE{
@@ -419,7 +418,7 @@ ArrayInit
     }
     |
     Exp{
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = dynamic_cast<ExprNode*>$1->getSymPtr();
         $$=new ArrayInit(se,$1,0);
     }
     ;
@@ -692,6 +691,12 @@ void searchVar(StmtNode* it, Type* type, SymbolTable* identifiers)
     if(it->isLeaf()==1)
     {
         SymbolEntry *se;
+        SymbolEntry* se1=identifiers->lookup(it->getId());
+        if(se1!=nullptr && dynamic_cast<IdentifierSymbolEntry*>(se1)->getScope()==identifiers->getLevel())
+        {
+            fprintf(stderr, "identifier \"%s\" is redefined\n", (char*)it->getId());
+            assert(dynamic_cast<IdentifierSymbolEntry*>(se1)->getScope()!=identifiers->getLevel());
+        }
         se = new IdentifierSymbolEntry(type, it->getId(), identifiers->getLevel(), 0, it->getIsArray());
         identifiers->install(it->getId(), se); 
         it->setId(new Id(se));  
@@ -701,6 +706,12 @@ void searchVar(StmtNode* it, Type* type, SymbolTable* identifiers)
         if(it->isLeaf()==2)
         {
             SymbolEntry *se;
+            SymbolEntry* se1=identifiers->lookup(it->getId());
+            if(se1!=nullptr && dynamic_cast<IdentifierSymbolEntry*>(se1)->getScope()==identifiers->getLevel())
+            {
+                fprintf(stderr, "identifier \"%s\" is redefined\n", (char*)it->getId());
+                assert(dynamic_cast<IdentifierSymbolEntry*>(se1)->getScope()!=identifiers->getLevel());
+            }
             se = new IdentifierSymbolEntry(type, it->getId(), identifiers->getLevel(), 0, it->getIsArray());
             identifiers->install(it->getId(), se); 
             it->setId(new Id(se));
@@ -723,6 +734,12 @@ void searchConst(StmtNode* it, Type* type, SymbolTable* identifiers)
         se = identifiers->lookup(it->id);
         dynamic_cast<IdentifierSymbolEntry*>(se)->markConst(1);*/
         SymbolEntry *se;
+        SymbolEntry* se1=identifiers->lookup(it->getId());
+        if(se1!=nullptr && dynamic_cast<IdentifierSymbolEntry*>(se1)->getScope()==identifiers->getLevel())
+        {
+            fprintf(stderr, "identifier \"%s\" is redefined\n", (char*)it->getId());
+            assert(dynamic_cast<IdentifierSymbolEntry*>(se1)->getScope()!=identifiers->getLevel());
+        }
         se = new IdentifierSymbolEntry(type, it->getId(), identifiers->getLevel(), 1, it->getIsArray());
         identifiers->install(it->getId(), se); 
         it->setId(new Id(se));  
