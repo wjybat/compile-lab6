@@ -5,6 +5,9 @@
     extern Ast ast;
     int yylex();
     int yyerror( char const * );
+    int isVoidFunc;
+    Type* returnType;
+    int isReturn;
     std::vector<Type*> funcParamsType;
     std::vector<int> paramsNum;
     void searchVar(StmtNode*, Type*, SymbolTable*);
@@ -83,6 +86,8 @@ EmptyBlock
 
 ExpStmt
     : Exp SEMICOLON{
+        
+	isVoidFunc=0;
         $$=new ExpStmt($1);
     }
 
@@ -124,7 +129,14 @@ LVal
 AssignStmt
     :
     LVal ASSIGN Exp SEMICOLON {
+        
         $$ = new AssignStmt($1, $3);
+        if( isVoidFunc==1 )
+        {
+            fprintf(stderr, "function's type is void\n");
+            assert(isVoidFunc!=1);
+        }
+	isVoidFunc=0;
     }
     ;
 BlockStmt
@@ -168,10 +180,32 @@ ContinueStmt
 ReturnStmt
     :
     RETURN Exp SEMICOLON{
+        if(!returnType->isInt())
+        {
+            fprintf(stderr, "return type should be void!\n");
+            assert(returnType->isInt());
+        }
+        
+        
+        isReturn=1;
+        
         $$ = new ReturnStmt($2);
+
+	if( isVoidFunc==1 )
+        {
+            fprintf(stderr, "function's type is void\n");
+            assert(isVoidFunc!=1);
+        }
+	isVoidFunc=0;
     }
     | RETURN SEMICOLON {
         $$ = new ReturnStmt();
+        if(!returnType->isVoid())
+        {
+            fprintf(stderr, "return type should be int!\n");
+            assert(returnType->isVoid());
+        }
+        isReturn=1;
     }
     ;
 Exp
@@ -510,6 +544,10 @@ FuncDef
         funcParamsType.clear();
         
         funcType = new FunctionType($1,{});
+
+        returnType=funcType->getRetType();
+        isReturn=0;
+        
         SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel(), 0, 0);
         identifiers->install($2, se);
         identifiers = new SymbolTable(identifiers);
@@ -525,6 +563,11 @@ FuncDef
         identifiers = identifiers->getPrev();
         delete top;
         delete []$2;
+
+        if(0==isReturn){
+          fprintf(stderr, "missing return!\n");
+          assert(1==isReturn);
+        }
     }
     | Type ID LPAREN {
         Type *funcType;
@@ -532,6 +575,10 @@ FuncDef
         funcParamsType.clear();
 
         funcType = new FunctionType($1,{});
+        
+        returnType=funcType->getRetType();
+        isReturn=0;
+         
         SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel(), 0, 0);
         identifiers->install($2, se);
         identifiers = new SymbolTable(identifiers);
@@ -554,6 +601,11 @@ FuncDef
         identifiers = identifiers->getPrev();
         delete top;
         //delete []$2;
+        
+        if(0==isReturn){
+          fprintf(stderr, "missing return!\n");
+          assert(1==isReturn);
+        }
     }
     ;
 FuncFParams
@@ -589,13 +641,19 @@ LeafFunc
 
         SymbolEntry *se1;
         se1 = identifiers->lookup($1);
-        if(se1 == nullptr || !se->getType()->isFunc())
+        if(se1 == nullptr || !se1->getType()->isFunc())
         {
             fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
             delete [](char*)$1;
             assert(se1 != nullptr && se->getType()->isFunc());
         }
+
+        
+        if(se1->getType()->getRetType()->isVoid()){isVoidFunc=1;}
+        else{isVoidFunc=0;}
+
         $$ = new LeafFunc(se1,$1);
+        
     }
     | ID LPAREN { paramsNum.push_back(0); }
       FuncRParams RPAREN {
@@ -624,6 +682,12 @@ LeafFunc
             delete [](char*)$1;
             assert(se->getType()->paramsLen()==se1->getType()->paramsLen());
         }
+
+        
+
+        if(se1->getType()->getRetType()->isVoid()){isVoidFunc=1;}
+        else{isVoidFunc=0;}
+
         $$ = new LeafFunc(se1,$1 ,$4);
         
         

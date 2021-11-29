@@ -30,7 +30,10 @@ IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int s
 
 std::string IdentifierSymbolEntry::toStr()
 {
-    return "@" + name;
+    if(this->isParam())
+        return "%" + name;
+    else
+        return "@" + name;
 }
 
 void IdentifierSymbolEntry::markConst(bool mark)

@@ -59,6 +59,10 @@ void FunctionDef::genCode()
     BasicBlock *entry = func->getEntry();
     // set the insert point to the entry basicblock of this function.
     builder->setInsertBB(entry);
+    if(params!=nullptr)
+    {
+        params->genCode();
+    }
 
     stmt->genCode();
 
@@ -169,8 +173,34 @@ void BinaryExpr::genCode()
     else if(op >= EQ && op <= GEQ)
     {
         // Todo
-        expr1->genCode();
-        expr2->genCode();
+        if(expr1->getSymPtr()->getType()->isInt() && dynamic_cast<IntType*>(expr1->getSymPtr()->getType())->itsSize()==1)
+        {
+            expr1->genCode();
+            BasicBlock *BB1 = new BasicBlock(func);
+            BB1->addPred(builder->getInsertBB());
+            builder->getInsertBB()->addSucc(BB1);
+            backPatch(expr1->trueList(),BB1);
+            backPatchF(expr1->falseList(),BB1);
+            builder->setInsertBB(BB1);  
+        }
+        else
+        {
+            expr1->genCode();
+        }
+        if(expr2->getSymPtr()->getType()->isInt() && dynamic_cast<IntType*>(expr2->getSymPtr()->getType())->itsSize()==1)
+        {
+            expr2->genCode();
+            BasicBlock *BB2 = new BasicBlock(func);
+            BB2->addPred(builder->getInsertBB());
+            builder->getInsertBB()->addSucc(BB2);
+            backPatch(expr2->trueList(),BB2);
+            backPatchF(expr2->falseList(),BB2);
+            builder->setInsertBB(BB2);  
+        }
+        else
+        {
+            expr2->genCode();
+        }
         Operand *src1 = expr1->getOperand();
         Operand *src2 = expr2->getOperand();
         int opcode;
@@ -196,7 +226,7 @@ void BinaryExpr::genCode()
             break;
 
         }
-        new CmpInstruction(opcode, dst, src1, src2, bb);
+        new CmpInstruction(opcode, dst, src1, src2, builder->getInsertBB());
         Instruction* temp=new CondBrInstruction(nullptr,nullptr,dst,builder->getInsertBB());
         true_list.push_back(temp);
         false_list.push_back(temp);
@@ -235,40 +265,96 @@ void UnaryExpr::genCode()
     BasicBlock *bb = builder->getInsertBB();
     if(op>=ADD && op<=SUB)
     {
-        expr->genCode();
-        Operand* src1=expr->getOperand();
-        int opcode;
-        SymbolEntry* se;
-        Operand* src2;
-        switch (op)
+        if(expr->getSymPtr()->getType()->isInt() && dynamic_cast<IntType*>(expr->getSymPtr()->getType())->itsSize()!=1)
         {
-        case ADD:
-            opcode = BinaryInstruction::MUL;
-            se = new ConstantSymbolEntry(TypeSystem::intType, 1);
-            src2=new Operand(se);
-            break;
-        case SUB:
-            opcode = BinaryInstruction::MUL;
-            se = new ConstantSymbolEntry(TypeSystem::intType, -1);
-            src2=new Operand(se);
-            break;
+            expr->genCode();
+            true_list=expr->falseList();
+            false_list=expr->trueList();
+            Operand* src1=expr->getOperand();
+            int opcode;
+            SymbolEntry* se;
+            Operand* src2;
+            switch (op)
+            {
+            case ADD:
+                opcode = BinaryInstruction::MUL;
+                se = new ConstantSymbolEntry(TypeSystem::intType, 1);
+                src2=new Operand(se);
+                break;
+            case SUB:
+                opcode = BinaryInstruction::MUL;
+                se = new ConstantSymbolEntry(TypeSystem::intType, -1);
+                src2=new Operand(se);
+                break;
+            }
+            new BinaryInstruction(opcode, dst, src2, src1, bb);
         }
-        new BinaryInstruction(opcode, dst, src2, src1, bb);
+        else
+        {
+            expr->genCode();
+            BasicBlock *bb1 = builder->getInsertBB();
+            bb1->remove(bb1->rbegin());
+            true_list=expr->falseList();
+            false_list=expr->trueList();
+            Operand* src1=expr->getOperand();
+            int opcode;
+            SymbolEntry* se;
+            Operand* src2;
+            switch (op)
+            {
+            case ADD:
+                opcode = BinaryInstruction::MUL;
+                se = new ConstantSymbolEntry(TypeSystem::intType, 1);
+                src2=new Operand(se);
+                break;
+            case SUB:
+                opcode = BinaryInstruction::MUL;
+                se = new ConstantSymbolEntry(TypeSystem::intType, -1);
+                src2=new Operand(se);
+                break;
+            }
+            new BinaryInstruction(opcode, dst, src2, src1, builder->getInsertBB());
+        }
     }
     else
     {
-        expr->genCode();
-        Operand* src1= expr->getOperand();
-        int opcode;
-        opcode = CmpInstruction::E;
-        SymbolEntry* se;
-        Operand* src2;
-        se = new ConstantSymbolEntry(TypeSystem::intType, 0);
-        src2=new Operand(se);
-        new CmpInstruction(opcode, dst, src1, src2, bb);
-        Instruction* temp=new CondBrInstruction(nullptr,nullptr,dst,builder->getInsertBB());
-        true_list.push_back(temp);
-        false_list.push_back(temp);
+        if(expr->getSymPtr()->getType()->isInt() && dynamic_cast<IntType*>(expr->getSymPtr()->getType())->itsSize()!=1)
+        {
+            expr->genCode();
+            Operand* src1= expr->getOperand();
+            int opcode;
+            opcode = CmpInstruction::E;
+            SymbolEntry* se;
+            Operand* src2;
+            se = new ConstantSymbolEntry(TypeSystem::intType, 0);
+            src2=new Operand(se);
+            new CmpInstruction(opcode, dst, src1, src2, bb);
+            Instruction* temp=new CondBrInstruction(nullptr,nullptr,dst,builder->getInsertBB());
+            true_list.push_back(temp);
+            false_list.push_back(temp);
+        }
+        else
+        {
+            Function *func = bb->getParent();
+            BasicBlock *trueBB = new BasicBlock(func); 
+            trueBB->addPred(builder->getInsertBB());
+            builder->getInsertBB()->addSucc(trueBB);
+            expr->genCode();
+            backPatch(expr->trueList(),trueBB);
+            backPatchF(expr->falseList(),trueBB);
+            Operand* src1=expr->getOperand();
+            int opcode;
+            opcode = BinaryInstruction::SUB;
+            SymbolEntry* se;
+            se = new ConstantSymbolEntry(TypeSystem::intType, 1);
+            Operand* src2=new Operand(se);
+            builder->setInsertBB(trueBB);
+            new BinaryInstruction(opcode, dst, src2, src1, builder->getInsertBB());
+            Instruction* temp=new CondBrInstruction(nullptr,nullptr,dst,builder->getInsertBB());
+            true_list.push_back(temp);
+            false_list.push_back(temp);
+        }
+        
     }
     
 }
@@ -283,10 +369,14 @@ void Id::genCode()
     BasicBlock *bb = builder->getInsertBB();
     Operand *addr = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getAddr();
     std::string s=dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->toStr();
-    int a=dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
-    printf("%d\n",a);
     assert(addr!=nullptr);
-    new LoadInstruction(dst, addr, bb);
+    if(!dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->isParam())
+        new LoadInstruction(dst, addr, bb);
+    else
+    {
+        dst=new Operand(symbolEntry);
+    }
+    
 }
 
 void LeafFunc::genCode()
@@ -336,8 +426,28 @@ void IfStmt::genCode()
     func = builder->getInsertBB()->getParent();
     then_bb = new BasicBlock(func);
     end_bb = new BasicBlock(func);
+    if(cond->getSymPtr()->getType()->isInt() && dynamic_cast<IntType*>(cond->getSymPtr()->getType())->itsSize()==1)
+    {
+        cond->genCode();
+    }
+    else
+    {
+        cond->genCode();
+        Operand* src1= cond->getOperand();
+        int opcode;
+        opcode = CmpInstruction::NE;
+        SymbolEntry* se;
+        Operand* src2;
+        se = new ConstantSymbolEntry(TypeSystem::intType, 0);
+        src2=new Operand(se);
+        SymbolEntry* s=new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
+        Operand* dst=new Operand(s);
 
-    cond->genCode();
+        new CmpInstruction(opcode, dst, src1, src2, builder->getInsertBB());
+        Instruction* temp=new CondBrInstruction(nullptr,nullptr,dst,builder->getInsertBB());
+        cond->trueList().push_back(temp);
+        cond->falseList().push_back(temp);
+    }
     backPatch(cond->trueList(), then_bb);
     backPatchF(cond->falseList(), end_bb);
     then_bb->addPred(builder->getInsertBB());
@@ -385,7 +495,7 @@ void IfElseStmt::genCode()
     builder->setInsertBB(else_bb);
     elseStmt->genCode();
     else_bb = builder->getInsertBB();
-    //new UncondBrInstruction(end_bb, else_bb);
+    new UncondBrInstruction(end_bb, else_bb);
     
 
     builder->setInsertBB(end_bb);
@@ -403,6 +513,7 @@ void WhileStmt::genCode()
     
     start_bb->addPred(builder->getInsertBB());
     builder->getInsertBB()->addSucc(start_bb);
+    new UncondBrInstruction(start_bb, builder->getInsertBB());
     builder->setInsertBB(start_bb);
 
     cond->genCode();
@@ -459,6 +570,7 @@ void VarDef::genCode()
         addr_se->setType(new PointerType(se->getType()));
         addr = new Operand(addr_se);
         se->setAddr(addr);
+        fprintf(yyout, "  %s = global %s 0, align 4\n", se->toStr().c_str(), se->getType()->toStr().c_str());
     }
     else if(se->isLocal())
     {
@@ -557,8 +669,16 @@ void ReturnStmt::genCode()
 {
     // Todo
     BasicBlock *bb = builder->getInsertBB();
-    Operand *src = retValue->getOperand();
-    new RetInstruction(src, bb);
+    if(retValue!=nullptr)
+    {
+        retValue->genCode();
+        Operand *src = retValue->getOperand();
+        new RetInstruction(src, bb);
+    }
+    else
+    {
+        new RetInstruction(nullptr, bb);
+    }
 }
 
 void AssignStmt::genCode()
@@ -579,23 +699,28 @@ void FuncFParams::genCode()
     FuncFParams1->genCode(); 
     FuncFParams2->genCode();
 }
-
+void FuncFParams::print()
+{
+    FuncFParams1->print(); 
+    FuncFParams2->print();
+}
 void FuncFParam::genCode()
 {
     Operand *addr;
     SymbolEntry *addr_se;
     addr_se = new IdentifierSymbolEntry(*dynamic_cast<IdentifierSymbolEntry *>(se));
-    addr_se->setType(new PointerType(se->getType()));
+    addr_se->setType(se->getType());
     addr = new Operand(addr_se);
     dynamic_cast<IdentifierSymbolEntry *>(se)->setAddr(addr);
-    std::string s=dynamic_cast<IdentifierSymbolEntry *>(se)->getAddr()->toStr();
-    printf("%s\n",s.c_str());
     //assert(addr==nullptr);
+}
+void FuncFParam::print()
+{
     std::string name, type;
     name = se->toStr();
     type = se->getType()->toStr();
     fprintf(yyout, "%s %s ", 
-            type.c_str(), name.c_str());
+        type.c_str(), name.c_str());
 }
 
 void Ast::typeCheck()

@@ -15,11 +15,11 @@ Function::Function(Unit *u, SymbolEntry *s, StmtNode* params)
 }
 
 Function::~Function()
-{
+{/*
     auto delete_list = block_list;
     for (auto &i : delete_list)
         delete i;
-    parent->removeFunc(this);
+    parent->removeFunc(this);*/
 }
 
 // remove the basicblock bb from its block_list.
@@ -37,10 +37,10 @@ void Function::output() const
     else
     {
         fprintf(yyout, "define %s %s(", retType->toStr().c_str(), sym_ptr->toStr().c_str());
-        params->genCode();
+        params->print();
         fprintf(yyout, ") {\n");
     }
-    
+
     std::set<BasicBlock *> v;
     std::list<BasicBlock *> q;
     q.push_back(entry);

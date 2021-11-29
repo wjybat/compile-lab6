@@ -18,7 +18,7 @@ public:
     bool isFunc() const {return kind == FUNC;};
     virtual int paramsLen() {return 0;};
     virtual void setParamsType(std::vector<Type*> funcParamsType) {};
-
+    virtual Type* getRetType() {Type* t= NULL;return t;};
 };
 
 class IntType : public Type

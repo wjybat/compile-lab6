@@ -144,6 +144,7 @@ public:
     virtual void markArray(bool array);
     virtual void setConstNum(ExprNode* num);
     virtual bool getIsArray();
+    virtual void print(){};
 
 };
 
@@ -324,7 +325,7 @@ class ReturnStmt : public StmtNode
 private:
     ExprNode *retValue;
 public:
-    ReturnStmt(ExprNode*retValue) : retValue(retValue) {};
+    ReturnStmt(ExprNode* retValue) : retValue(retValue) {};
     ReturnStmt() : retValue(nullptr) {};
     void output(int level);
     void typeCheck();
@@ -411,6 +412,7 @@ public:
     StmtNode* getFP2() {return FuncFParams2;};
     void output(int level);
     void genCode();
+    void print();
 };
 
 class FuncFParam : public StmtNode
@@ -431,6 +433,7 @@ public:
     bool getIsArray(){return isArray;};
     void setConstNum(ExprNode* num){constNum=num;};
     void genCode();
+    void print();
 };
 
 class LeafFunc : public ExprNode

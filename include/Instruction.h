@@ -103,7 +103,7 @@ public:
     CmpInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb = nullptr);
     ~CmpInstruction();
     void output() const;
-    enum {E, NE, L, GE, G, LE};
+    enum {E, NE, L, LE, G, GE};
 };
 
 // unconditional branch

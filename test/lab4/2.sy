@@ -9,6 +9,6 @@ int main()
     c = 8 % 6;
     if(a && b)
         return 1;
-    putint(a);
+    //putint(a);
     return 0;
 }
